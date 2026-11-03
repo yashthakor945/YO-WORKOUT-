@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<meta name="description" content="YO WORKOUT — your personal workout calendar and daily exercise tracker.">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon-192.png">
+<title>YO WORKOUT</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121e30;--panel2:#1b2a40;--text:#f4f7fb;--muted:#a8b5c7;--blue:#60a5fa;--green:#34d399;--line:#2b3b52;--gold:#fbbf24}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#101c30,#080d17);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:760px;margin:auto;padding:16px 13px 36px}.hero{padding:18px;border-radius:22px;background:linear-gradient(135deg,#18375a,#17233a);border:1px solid #355273}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:68px;height:68px;border-radius:17px;overflow:hidden;display:grid;place-items:center;flex-shrink:0}.logo img{width:100%;height:100%;object-fit:cover}.hero h1{font-size:24px;margin:0}.sub{color:#c4d3e6;font-size:12px;margin-top:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:13px 0}.stat,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px}.stat{padding:12px 9px}.num{font-size:24px;font-weight:800;color:var(--green)}.label{font-size:10px;color:var(--muted)}
+.panel{padding:14px;margin-top:12px}.row{display:flex;align-items:center;justify-content:space-between;gap:9px}.monthtitle{font-size:17px;font-weight:750}
+button{border:0;border-radius:11px;background:var(--panel2);color:var(--text);padding:10px 13px;font-weight:650;font-size:14px}button.primary{background:#2563eb}button:disabled{opacity:.4}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:12px}.weekday{text-align:center;color:var(--muted);font-size:11px;padding:5px 0}.day{min-height:45px;border:1px solid var(--line);border-radius:10px;background:#111b2b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px}.day small{font-size:9px;color:var(--muted)}.day.selected{outline:2px solid var(--blue);background:#1b3554}.day.done{border-color:#238c6a;background:#12382f}.day.rest{background:#242b36;color:#aeb7c4}.day.today{box-shadow:inset 0 0 0 1px var(--blue)}.day.empty{visibility:hidden}
+.title{font-weight:750;font-size:16px;margin:0 0 8px}.muted{color:var(--muted);font-size:12px;line-height:1.5}.group{margin-top:15px}.group h3{font-size:13px;color:#93c5fd;margin:0 0 5px}
+.exercise{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #26364b}.exercise:last-child{border:0}.exercise input{width:20px;height:20px;accent-color:#34d399;flex-shrink:0}.exname{flex:1}.exname strong{display:block;font-size:14px}.exname small{color:var(--muted);font-size:12px}.exercise.checked strong{text-decoration:line-through;color:#8fa4b9}
+.pill{font-size:11px;border-radius:20px;padding:5px 8px;background:#20334c;color:#bfdbfe;white-space:nowrap}.progress{height:8px;border-radius:9px;background:#26364b;overflow:hidden;margin:10px 0}.bar{height:100%;background:linear-gradient(90deg,#34d399,#60a5fa);width:0%}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions button{flex:1}
+.restbox{text-align:center;padding:20px;background:#202a38;border-radius:14px}.restbox .emoji{font-size:32px}.summaryline{display:flex;justify-content:space-between;gap:10px;margin-top:9px}.summaryline span{color:var(--muted);font-size:12px}.notice{background:#282515;border:1px solid #66552b;color:#f6e7b0;padding:12px;border-radius:13px;font-size:12px;line-height:1.5;margin-top:12px}
+footer{text-align:center;color:#8191a7;font-size:11px;margin-top:17px}
+@media(min-width:600px){.day{min-height:55px}.wrap{padding-top:24px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero"><div class="brand"><div class="logo"><img src="./icon-512.png" alt="YO WORKOUT logo"></div><div><h1>YO WORKOUT</h1><div class="sub">Your workout. Your calendar. Your progress.</div></div></div></header>
+<div class="stats">
+ <div class="stat"><div class="num" id="statDays">0</div><div class="label">WORKOUT DAYS</div></div>
+ <div class="stat"><div class="num" id="statDone">0</div><div class="label">FULLY DONE DAYS</div></div>
+ <div class="stat"><div class="num" id="statTicks">0</div><div class="label">EXERCISES TICKED</div></div>
+</div>
+<section class="panel">
+ <div class="row"><button id="prev" aria-label="Previous month">‹</button><div class="monthtitle" id="monthLabel"></div><button id="next" aria-label="Next month">›</button></div>
+ <div class="calendar" id="calendar"></div>
+ <div class="muted" style="margin-top:8px">🟢 Workout completed at least partly · ◼ Sunday rest · 🔵 Selected date</div>
+</section>
+<section class="panel">
+ <div class="row"><div><div class="title" id="dateTitle">Daily Workout</div><div class="muted" id="dateSub">Tick an exercise after completing it.</div></div><span class="pill" id="countPill">0 / 24</span></div>
+ <div class="progress"><div class="bar" id="progress"></div></div>
+ <div id="exerciseList"></div>
+ <div class="actions"><button class="primary" id="markAll">Mark all done</button><button id="clearDay">Clear day</button></div>
+</section>
+<section class="panel">
+ <div class="title">Month-end result</div>
+ <div class="summaryline"><span>Workout days (at least one tick)</span><strong id="monthDays">0</strong></div>
+ <div class="summaryline"><span>Fully completed workout days</span><strong id="monthFull">0</strong></div>
+ <div class="summaryline"><span>Sunday rest days</span><strong id="monthRest">0</strong></div>
+ <div class="summaryline"><span>Total exercise ticks</span><strong id="monthTicks">0</strong></div>
+ <div class="summaryline"><span>Exercise completion rate</span><strong id="monthRate">0%</strong></div>
+ <p class="muted">Choose any month using the arrows. Your ticks are saved on this device in this browser.</p>
+</section>
+<div class="notice"><strong>Safety note:</strong> This tracker preserves the exercises and amounts from your notebook. That is a long list, so do not push through pain or exhaustion or assume you must do every exercise daily. Allow recovery, use stable equipment, and ask a qualified adult/coach to check unfamiliar movements. Stop if you feel pain, dizziness, or unusual breathlessness.</div>
+<footer>YO WORKOUT · Personal progress tracker</footer>
+</div>
+<script>
+const groups=[
+["Warm-ups",[
+["Arm circle","30 sec"],["Jumping jacks","30"],["High knees","30"],["Shoulder rotations","15"],["Light stretch","20"]]],
+["Chest",[
+["Decline push-ups","2 × 5"],["Push-ups","2 × 5"],["Diamond push-ups","2 × 5"]]],
+["Back",[
+["Backpack rows","2 × 10"],["Door frame rows","2 × 8"],["Pull-ups","No reps written"]]],
+["Shoulders",[
+["Pike push-ups","1 × 5"],["Lateral raises (bottles)","2 × 10"],["Rear delt fly (bottles)","2 × 10"]]],
+["Arms",[
+["Bench dips","2 × 10"],["Backpack hammer curls","2 × 10"],["Diamond push-ups","2 × 5"]]],
+["Legs",[
+["Squats","2 × 10"],["Reverse lunges","2 × 10"],["Calf raises","2 × 15"]]],
+["Core",[
+["Reverse crunch","2 × 5"],["Plank","20 sec"],["Mountain climbers","2 × 20 sec"],["Bicycle crunch","2 × 5"]]]
+];
+const exercises=groups.flatMap(([g,items])=>items.map(([name,reps],i)=>({id:g+"_"+i,name,reps})));
+const STORE_KEY="yo_workout_progress_v2";let data={};
+try{data=JSON.parse(localStorage.getItem(STORE_KEY)||"{}")||{}}catch(e){data={}}
+let shown=new Date();shown.setDate(1);let selected=new Date();
+const pad=n=>String(n).padStart(2,"0");
+const key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const sunday=d=>d.getDay()===0;
+const monthKey=()=>`${shown.getFullYear()}-${pad(shown.getMonth()+1)}`;
+const dayTicks=d=>Object.values(data[key(d)]||{}).filter(Boolean).length;
+function save(){try{localStorage.setItem(STORE_KEY,JSON.stringify(data))}catch(e){alert("Could not save data. Check browser storage settings.")}}
+function renderCalendar(){
+ const el=document.getElementById("calendar");el.innerHTML="";
+ ["Su","Mo","Tu","We","Th","Fr","Sa"].forEach(x=>{const n=document.createElement("div");n.className="weekday";n.textContent=x;el.appendChild(n)});
+ const first=new Date(shown.getFullYear(),shown.getMonth(),1).getDay();
+ for(let i=0;i<first;i++){const n=document.createElement("div");n.className="day empty";el.appendChild(n)}
+ const count=new Date(shown.getFullYear(),shown.getMonth()+1,0).getDate();
+ for(let n=1;n<=count;n++){
+  const d=new Date(shown.getFullYear(),shown.getMonth(),n),b=document.createElement("button"),ticks=dayTicks(d);
+  b.className="day"+(key(d)===key(selected)?" selected":"")+(sunday(d)?" rest":"")+(ticks?" done":"")+(key(d)===key(new Date())?" today":"");
+  b.innerHTML=`<span>${n}</span><small>${sunday(d)?"REST":ticks?`${ticks}/${exercises.length}`:""}</small>`;
+  b.onclick=()=>{selected=d;renderAll()};el.appendChild(b);
+ }
+ document.getElementById("monthLabel").textContent=shown.toLocaleDateString("en-IN",{month:"long",year:"numeric"});
+}
+function renderDay(){
+ const rest=sunday(selected),list=document.getElementById("exerciseList");
+ document.getElementById("dateTitle").textContent=selected.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+ document.getElementById("dateSub").textContent=rest?"Sunday — scheduled rest day":"Tick each exercise after you complete it.";
+ document.getElementById("markAll").disabled=rest;document.getElementById("clearDay").disabled=rest;
+ if(rest){list.innerHTML='<div class="restbox"><div class="emoji">🌿</div><strong>REST DAY</strong><p class="muted">Sunday is your weekly rest day.</p></div>';document.getElementById("countPill").textContent="Rest";document.getElementById("progress").style.width="0%";return}
+ const saved=data[key(selected)]||{},ticks=dayTicks(selected);
+ document.getElementById("countPill").textContent=`${ticks} / ${exercises.length}`;
+ document.getElementById("progress").style.width=(ticks/exercises.length*100)+"%";
+ list.innerHTML="";
+ groups.forEach(([group,items])=>{
+  const section=document.createElement("div");section.className="group";
+  const heading=document.createElement("h3");heading.textContent=group;section.appendChild(heading);
+  items.forEach(([name,reps],i)=>{
+   const id=group+"_"+i,checked=!!saved[id],label=document.createElement("label");label.className="exercise"+(checked?" checked":"");
+   const box=document.createElement("input");box.type="checkbox";box.checked=checked;
+   const text=document.createElement("span");text.className="exname";
+   const strong=document.createElement("strong");strong.textContent=name;
+   const small=document.createElement("small");small.textContent=reps;
+   text.append(strong,small);label.append(box,text);
+   box.addEventListener("change",()=>{const current=data[key(selected)]||{};current[id]=box.checked;data[key(selected)]=current;save();renderAll()});
+   section.appendChild(label);
+  });list.appendChild(section);
+ });
+}
+function renderSummary(){
+ const prefix=monthKey()+"-",days=Object.keys(data).filter(k=>k.startsWith(prefix));
+ const ticks=days.reduce((sum,k)=>sum+Object.values(data[k]||{}).filter(Boolean).length,0);
+ const workout=days.filter(k=>Object.values(data[k]||{}).some(Boolean)).length;
+ const full=days.filter(k=>exercises.every(x=>data[k]?.[x.id])).length;
+ const sundays=Array.from({length:new Date(shown.getFullYear(),shown.getMonth()+1,0).getDate()},(_,i)=>new Date(shown.getFullYear(),shown.getMonth(),i+1)).filter(sunday).length;
+ const possible=(new Date(shown.getFullYear(),shown.getMonth()+1,0).getDate()-sundays)*exercises.length;
+ document.getElementById("statDays").textContent=workout;
+ document.getElementById("statDone").textContent=full;
+ document.getElementById("statTicks").textContent=ticks;
+ document.getElementById("monthDays").textContent=workout;
+ document.getElementById("monthFull").textContent=full;
+ document.getElementById("monthRest").textContent=sundays;
+ document.getElementById("monthTicks").textContent=ticks;
+ document.getElementById("monthRate").textContent=(possible?Math.round(ticks/possible*100):0)+"%";
+}
+function renderAll(){renderCalendar();renderDay();renderSummary()}
+document.getElementById("prev").onclick=()=>{shown=new Date(shown.getFullYear(),shown.getMonth()-1,1);selected=new Date(shown.getFullYear(),shown.getMonth(),Math.min(selected.getDate(),new Date(shown.getFullYear(),shown.getMonth()+1,0).getDate()));renderAll()};
+document.getElementById("next").onclick=()=>{shown=new Date(shown.getFullYear(),shown.getMonth()+1,1);selected=new Date(shown.getFullYear(),shown.getMonth(),Math.min(selected.getDate(),new Date(shown.getFullYear(),shown.getMonth()+1,0).getDate()));renderAll()};
+document.getElementById("markAll").onclick=()=>{if(sunday(selected))return;const d={};exercises.forEach(x=>d[x.id]=true);data[key(selected)]=d;save();renderAll()};
+document.getElementById("clearDay").onclick=()=>{if(sunday(selected))return;delete data[key(selected)];save();renderAll()};
+renderAll();
+</script>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));}
+</script>
+</body>
+</html>
